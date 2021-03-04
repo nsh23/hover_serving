@@ -39,7 +39,7 @@ class InfererURL:
     input_img argument can be PIL image, numpy array or just path to .png file.
     """
 
-    def __init__(self, input_img, model, server_url=None, batch_size=30):
+    def __init__(self, input_img, model, server_url=None, batch_size=32):
         self.model = model
 
         self.server_url = (
@@ -116,7 +116,8 @@ class InfererURL:
         # if it is PIL image
         if isinstance(input_img, Image.Image):
             self.input_img = cv2.cvtColor(
-                np.array(input_img, dtype=np.float32), cv2.COLOR_BGR2RGB
+                cv2.cvtColor(np.array(input_img, dtype=np.float32), cv2.COLOR_RGB2BGR),
+                cv2.COLOR_BGR2RGB,
             )
         # if it is np array (f.eks. cv2 image)
         elif isinstance(input_img, np.ndarray):
@@ -169,6 +170,7 @@ class InfererURL:
 
         pred_map = deque()
 
+        # TODO: OPTIMIZE with grequests
         while len(sub_patches) > self.inf_batch_size:
             mini_batch = sub_patches[: self.inf_batch_size]
             sub_patches = sub_patches[self.inf_batch_size :]
@@ -372,7 +374,7 @@ if __name__ == "__main__":
     parser.add_argument("--input_img", help="Full path to input image", required=True)
     parser.add_argument("--save_dir", help="Path to the directory to save result")
     parser.add_argument("--model_name", help="Model to use", required=True)
-    parser.add_argument("--batch_size", help="Batch size", type=int, default=15)
+    parser.add_argument("--batch_size", help="Batch size", type=int, default=32)
     args = parser.parse_args()
 
     ### get available models on tf-serving
@@ -380,7 +382,7 @@ if __name__ == "__main__":
     ### Models (check via <get_available_models>): consep_aug, consep_original, pannuke_aug, pannuke_original
 
     ##########################################################################
-    ### InfererURL(input_img, model, server_url=None, batch_size=30)
+    ### InfererURL(input_img, model, server_url=None, batch_size=32)
 
     ### server_url  are set up via os.env
     inferer = InfererURL(args.input_img, args.model_name, batch_size=args.batch_size)
